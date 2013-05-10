@@ -1,0 +1,46 @@
+Appunti Kernel Driver
+
+
+NOTE:
+
+il makefile DEVE obblibatoriamente chiamarsi con la Maiuscola "Makefile" 
+
+
+sotto la cartella 
+/sys/module/ 
+prima del insmod non troviamo nulla.
+dopo la insmod lanciata con i valori di default troviamo la cartella myhello/
+/sys/module/myhello/
+che contiene
+
+total 0
+holders/      #nulla  
+initstate
+notes/       #nulla
+parameters/  #parametri numerici
+             n_hello   -> = 1
+             nstamp    -> = 1
+refcnt
+sections/
+            __param   -> = 0x00000000
+srcversion
+
+mentro sotto /proc non troviamo nulla.
+
+[luca@WSON3 /]$ sudo find . -name myhello
+./sys/module/myhello
+
+
+
+###  INFO su MYDEV  ###[root@WSON3 test]# ./mydev -i /dev/mydev0
+device		size	free	ready
+-------------------------------------
+/dev/mydev0	1024	1024	0
+[root@WSON3 test]# dmesg -c
+mydev_open(inode e457b408, file db93b8c0, flags 0)
+mydev_ioctl(inode e457b408, file db93b8c0, cmd -2147193600, arg bf84416c)
+mydev_ioctl(inode e457b408, file db93b8c0, cmd -2147193599, arg bf844168)
+mydev_ioctl(inode e457b408, file db93b8c0, cmd -2147193598, arg bf844164)
+mydev_close(inode e457b408, file db93b8c0)
+[root@WSON3 test]# 
+
