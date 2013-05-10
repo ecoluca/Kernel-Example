@@ -1,8 +1,11 @@
 # File Estension 
 *~
 *#
+*.txt
+
+# Automake File
+*.order
 *.o
 *.ko
-
-# Executable File
- 
+*.ko.unsigned
+*.mod.*
