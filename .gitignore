@@ -1,0 +1,8 @@
+# File Estension 
+*~
+*#
+*.o
+*.ko
+
+# Executable File
+ 
