@@ -10,7 +10,10 @@ Kernel-Example
 ==============
 
 Two examples of "Hello Word" application in Kernel Space: 
-- One is a Kernel Module, 
-- Other is a simple Device Driver.
+- One is a Kernel Module:
+      ./Kernel-Module 
 
+- Other is a simple Device Driver.
+      ./Kernel-Drivers
+        
 

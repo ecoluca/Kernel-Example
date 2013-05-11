@@ -9,3 +9,4 @@
 *.ko
 *.ko.unsigned
 *.mod.*
+*.symvers

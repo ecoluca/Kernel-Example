@@ -1,0 +1,11 @@
+Kernel-Driver - README
+==============
+
+ Kernel-Module
+ Copyright (C) 2012
+ Author: Luca Contri
+
+==============
+
+Example of Device Module. 
+This is a simple "Hello Word" script.
