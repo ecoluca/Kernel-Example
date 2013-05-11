@@ -34,7 +34,8 @@ static int __init myhello_init(void)
         goto error_1; 
     else
         for( i=0 ; i < nstamp; i++){
-            printk(KERN_ALERT "Hello World !!! I'm Luca's Kernel Driver \n\tmessage N.%d\n\t### %s", i, mymsg);
+            printk(KERN_ALERT "Hello World !!! I'm Luca's Kernel Driver \n\t"
+                   "message N.%d\n\t### %s", i, mymsg);
         }
     // BUGS(); ??? Funzione esplicita non trovata    
     return 0;
