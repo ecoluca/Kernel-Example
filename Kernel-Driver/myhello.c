@@ -11,6 +11,8 @@
 #include <linux/cdev.h>
 #include <linux/fs.h>
 
+#include <linux/device.h>
+
 
 
 #include "mybuff.h"
@@ -21,15 +23,18 @@
 #define BUFF_MAX_SIZE    2048
 
 #define MY_NAME_DEV "myhello"
+#define MY_NAME_DEVS "myhello%d"
 
 
 /* Function Prototype */
 static int __init myhello_init(void);
 static void __exit myhello_exit(void);
+
 static int myhello_open(struct inode *inode, struct file *file);
-static int myhello_close(struct inode *inode, struct file *file);
+// static int myhello_close(struct inode *inode, struct file *file);
 
-
+static struct class *myhello_class;
+static struct device *myhello_device;
 
 
 /* myhello module parameters */
@@ -193,9 +198,19 @@ static int __init myhello_init(void)
 			err = -ENODEV;
 			goto error_3;
 	        } 
-
-    }
 	
+    }
+
+        /* register to sysfs and send uevents to create dev nodes */
+        myhello_class = class_create(THIS_MODULE, MY_NAME_DEV);
+        for (i = 0; i < myhello_no; i++) {
+            myhello_device = device_create(myhello_class, NULL, 
+                                           MKDEV(myhello_major, myhello_minor + i), NULL, MY_NAME_DEVS, i);
+        }
+        
+	
+    
+    /* For example Print on Dmesg Buffer */
     for( i=0 ; i < nstamp; i++){
         printk(KERN_ALERT "Hello World !!! I'm Luca's Kernel Driver \n\t"
                "message N.%d\n\t### %s", i, mymsg);
@@ -204,7 +219,7 @@ static int __init myhello_init(void)
     
     return 0;
 
-    /* Memory Release */
+    /* Memory Release - After Error */
  error_3:
     kfree(myhello);
  error_2:
@@ -235,19 +250,18 @@ static void __exit myhello_exit(void)
 	/* unregister chrdev region, release the major number */
 	unregister_chrdev_region(myhello_id, myhello_no);
 
+    /* unregister from sysfs and send uevents to destroy dev nodes */
+	for (i = 0; i < myhello_no; i++) {
+		device_destroy(myhello_class, MKDEV(myhello_major, myhello_minor + i));
+	}
+	class_destroy(myhello_class);
+    
     printk(KERN_ALERT "Bye Bye World !!! Luca's Kernel Driver Delete\n");
 	return;
 }
 
 
 
-//    /* unregister from sysfs and send uevents to destroy dev nodes */
-//    for (i = 0; i < myhello_no; i++) {
-//    	device_destroy(myhello_class, MKDEV(myhello_major, myhello_minor + i));
-//    	pr_debug("%s(): deleted device node for device %d, %d\n",
-//    		__func__, myhello_major, myhello_minor + i);
-//    }
-//    class_destroy(myhello_class);
 
 
 

@@ -10,5 +10,5 @@ clean:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) clean
 
 fclean:
-	rm *~
-	rm *#
+	rm -fr *~
+	rm -fr *#
