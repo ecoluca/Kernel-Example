@@ -2,6 +2,7 @@
 *~
 *#
 *.txt
+*.cmd
 
 # Automake File
 *.order
@@ -10,3 +11,9 @@
 *.ko.unsigned
 *.mod.*
 *.symvers
+
+# Folder
+.tmp_versions
+
+# EXE File
+myhello

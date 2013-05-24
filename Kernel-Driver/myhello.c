@@ -10,10 +10,8 @@
 #include <linux/module.h>
 #include <linux/cdev.h>
 #include <linux/fs.h>
-
 #include <linux/device.h>
-
-
+#include <asm/uaccess.h>
 
 #include "mybuff.h"
 #include "myhello.h"
@@ -75,16 +73,6 @@ static struct myhello_info {
 } *myhello;
 
 
-static const struct file_operations myhello_fops = {
-	.owner = THIS_MODULE,
-	.open = myhello_open,
-    //    .release = myhello_close,
-    //	.read = myhello_read,
-    //	.write = myhello_write,
-    //	.ioctl = myhello_ioctl,
-    //	.poll = myhello_poll,
-    //	.fasync = myhello_fasync
-};
 
 
 
@@ -126,7 +114,111 @@ static int myhello_open(struct inode *inode, struct file *file)
     return 0;
 }
 
+/**
+ * myhello_close - Closes the MYHELLO device.
+ * @inode: inode pointer
+ * @file: file pointer
+ * 
+ * Returns 0 if no error, standard error number otherwise.
+ */
+static int myhello_close(struct inode *inode, struct file *file)
+{
+    //	struct myhello_info *myhello = file->private_data;
 
+	return 0; // fasync_helper(-1, file, 0, &myhello->async_queue);
+}
+
+
+/**
+ * myhello_write - Writes to the MYHELLO device.
+ * @file: file pointer
+ * @buf: user buffer pointer
+ * @count: size of the requested data transfer
+ * @offp: file position pointer (not used)
+ * 
+ * Returns 0 if no error, standard error number otherwise.
+ */
+static ssize_t myhello_write(struct file *file, const char __user *buf,
+	size_t count, loff_t *offp)
+{
+    struct myhello_info *myhello = file->private_data;
+    char *tmpbuf;
+    ssize_t retval;
+    
+    tmpbuf = kmalloc(count, GFP_KERNEL);
+    if (!tmpbuf) {
+        retval = -ENOMEM;
+        goto error_1;
+    }
+    if (copy_from_user(tmpbuf, buf, count)) {
+        retval = -EFAULT;
+        goto error_2;
+    }
+    retval = mybuff_write(myhello->mybuff, tmpbuf, count);
+    kfree(tmpbuf);
+        
+    return retval;
+    
+    /* Memory Release - After Error */
+ error_2:
+	kfree(tmpbuf);
+    // Unlock Mutex if used
+ error_1:
+	return retval;
+
+}
+
+
+/**
+ * myhello_read - Reads from the MYHELLO device.
+ * @file: file pointer
+ * @buf: user buffer pointer
+ * @count: size of the requested data transfer
+ * @offp: file position pointer (not used)
+ * 
+ * Returns 0 if no error, standard error number otherwise.
+ */
+static ssize_t myhello_read(struct file *file, const char __user *buf,
+	size_t count, loff_t *offp)
+{
+	struct myhello_info *myhello = file->private_data;
+	void *tmpbuf;
+	ssize_t retval;
+    
+    tmpbuf = kmalloc(count, GFP_KERNEL);
+	if (!tmpbuf) {
+		retval = -ENOMEM;
+		goto error_1;
+	}
+	retval = mybuff_read(myhello->mybuff, tmpbuf, count);
+	pr_debug("%s(): read %d bytes of %d \n", __func__, retval, count);
+	if (copy_to_user((void *)buf, tmpbuf, retval)) {
+		retval = -EFAULT;
+		goto error_2;
+	}
+	kfree(tmpbuf);
+    
+    return retval;
+    
+    /* Memory Release - After Error */
+ error_2:
+ 	kfree(tmpbuf);
+   // Unlock Mutex if used
+ error_1:
+    return retval;
+}
+
+
+static const struct file_operations myhello_fops = {
+	.owner = THIS_MODULE,
+	.open = myhello_open,
+    .release = myhello_close,
+	.read = myhello_read,
+	.write = myhello_write,
+    //	.ioctl = myhello_ioctl,
+    //	.poll = myhello_poll,
+    //	.fasync = myhello_fasync
+};
 
 
 
@@ -179,7 +271,7 @@ static int __init myhello_init(void)
     /* Cicle */
 	for (i = 0; i < myhello_no; i++) {
         
-		/* Create a Buffur */        
+		/* Create a Buffer */        
         err =  mybuff_create(&myhello[i].mybuff, myhello_size);
 		if (err < 0) {
 			pr_err("%s(): can't create mybuff for device %d, %d\n",
@@ -207,16 +299,13 @@ static int __init myhello_init(void)
             myhello_device = device_create(myhello_class, NULL, 
                                            MKDEV(myhello_major, myhello_minor + i), NULL, MY_NAME_DEVS, i);
         }
-        
-	
-    
+  
     /* For example Print on Dmesg Buffer */
     for( i=0 ; i < nstamp; i++){
         printk(KERN_ALERT "Hello World !!! I'm Luca's Kernel Driver \n\t"
                "message N.%d\n\t### %s", i, mymsg);
     }
-    
-    
+
     return 0;
 
     /* Memory Release - After Error */
@@ -227,7 +316,6 @@ static int __init myhello_init(void)
  error_1:
     return err;
 }
-
 
 
 /**
@@ -241,7 +329,7 @@ static void __exit myhello_exit(void)
         /* delete cdev */
 		cdev_del(&myhello[i].cdev);
 
-        /* delete myhello */
+        /* delete myhello buffer */
 		mybuff_delete(myhello[i].mybuff);
 	}
 	/* Memory release */
@@ -259,10 +347,6 @@ static void __exit myhello_exit(void)
     printk(KERN_ALERT "Bye Bye World !!! Luca's Kernel Driver Delete\n");
 	return;
 }
-
-
-
-
 
 
 module_init(myhello_init);

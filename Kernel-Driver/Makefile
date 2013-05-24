@@ -9,6 +9,7 @@ default:
 clean:
 	$(MAKE) -C $(KERNELDIR) M=$(PWD) clean
 
-fclean:
+distclean:
+	$(MAKE) -C $(KERNELDIR) M=$(PWD) clean
 	rm -fr *~
 	rm -fr *#
